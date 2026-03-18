@@ -3,166 +3,391 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebM → M4A 変換ツール</title>
+  <title>webm2m4a</title>
   <link rel="icon" href="data:,">
-
-  <!-- ★ これが GitHub Pages で SharedArrayBuffer を有効化する鍵 -->
   <script src="coi-serviceworker.js"></script>
 
+  <!-- LINE Seed JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@100;300;400;700;800&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --bg:        #07080a;
+      --surface:   #111318;
+      --surface2:  #191c22;
+      --border:    #2a2e37;
+      --text:      #e8eaed;
+      --text-sub:  #8b8f98;
+      --accent:    #6c5ce7;
+      --accent2:   #a29bfe;
+      --success:   #00e676;
+      --error:     #ff5252;
+      --glow:      rgba(108, 92, 231, 0.25);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0f172a;
-      color: #e2e8f0;
+      font-family: 'LINE Seed JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
+    }
+
+    /* 背景パーティクル風のアクセント */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(162,155,254,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(108,92,231,0.05) 0%, transparent 50%);
+      animation: bgShift 20s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes bgShift {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(-3%, 2%) rotate(3deg); }
     }
 
     .container {
-      background: #1e293b;
-      border-radius: 16px;
-      padding: 40px;
-      max-width: 520px;
-      width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      position: relative;
+      z-index: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 44px 40px 36px;
+      max-width: 480px;
+      width: 92%;
+      box-shadow:
+        0 4px 24px rgba(0,0,0,0.4),
+        0 0 80px var(--glow);
+      transition: box-shadow 0.5s;
     }
 
-    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 8px; }
+    .container:hover {
+      box-shadow:
+        0 4px 32px rgba(0,0,0,0.5),
+        0 0 120px var(--glow);
+    }
 
-    .subtitle {
+    /* ヘッダー */
+    .app-header {
       text-align: center;
-      color: #94a3b8;
-      font-size: 0.85rem;
-      margin-bottom: 10px;
+      margin-bottom: 28px;
     }
 
+    .app-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .app-logo .icon-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 4px 16px var(--glow);
+    }
+
+    .app-logo h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--text) 30%, var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .app-desc {
+      color: var(--text-sub);
+      font-size: 0.82rem;
+      font-weight: 300;
+      letter-spacing: 0.3px;
+    }
+
+    /* 環境チェック */
     .env-check {
       text-align: center;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 400;
       margin-bottom: 24px;
-      padding: 8px;
-      border-radius: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: all 0.3s;
     }
-    .env-check.ok   { color: #4ade80; background: rgba(74,222,128,0.1); }
-    .env-check.fail { color: #f87171; background: rgba(248,113,113,0.1); }
-    .env-check.wait { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .env-check.ok {
+      color: var(--success);
+      background: rgba(0,230,118,0.06);
+      border-color: rgba(0,230,118,0.15);
+    }
+    .env-check.fail {
+      color: var(--error);
+      background: rgba(255,82,82,0.06);
+      border-color: rgba(255,82,82,0.15);
+    }
+    .env-check.wait {
+      color: #fdd835;
+      background: rgba(253,216,53,0.06);
+      border-color: rgba(253,216,53,0.15);
+    }
 
+    /* ドロップゾーン */
     .drop-zone {
-      border: 2px dashed #475569;
-      border-radius: 12px;
-      padding: 40px 20px;
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 44px 20px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       margin-bottom: 20px;
+      background: var(--surface2);
+      overflow: hidden;
     }
 
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: #60a5fa;
-      background: rgba(96,165,250,0.05);
+    .drop-zone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 50%, var(--glow), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
     }
 
-    .drop-zone p { color: #94a3b8; font-size: 0.95rem; }
-    .drop-zone .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .drop-zone:hover::before,
+    .drop-zone.dragover::before {
+      opacity: 1;
+    }
 
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(108,92,231,0.15);
+    }
+
+    .drop-zone .drop-icon {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+      display: block;
+      transition: transform 0.3s;
+    }
+
+    .drop-zone:hover .drop-icon {
+      transform: scale(1.15);
+    }
+
+    .drop-zone p {
+      color: var(--text-sub);
+      font-size: 0.88rem;
+      font-weight: 300;
+      line-height: 1.6;
+    }
+
+    /* ファイル名表示 */
     .file-name {
-      color: #60a5fa;
-      font-size: 0.9rem;
-      margin-bottom: 16px;
+      color: var(--accent2);
+      font-size: 0.85rem;
+      font-weight: 400;
+      margin-bottom: 20px;
       text-align: center;
       min-height: 1.2em;
+      transition: color 0.3s;
     }
 
+    /* 設定 */
     .settings {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
 
-    .settings label { font-size: 0.85rem; color: #94a3b8; }
+    .settings label {
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--text-sub);
+    }
 
     .settings select {
-      background: #334155;
-      color: #e2e8f0;
-      border: 1px solid #475569;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      border: none;
+      font-family: 'LINE Seed JP', sans-serif;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 400;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: border-color 0.3s;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b8f98' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 30px;
     }
 
-    #convertBtn { background: #3b82f6; color: white; }
-    #convertBtn:hover:not(:disabled) { background: #2563eb; }
+    .settings select:hover,
+    .settings select:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
 
-    button:disabled {
-      background: #334155;
-      color: #64748b;
+    /* ボタン */
+    .convert-btn {
+      position: relative;
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-family: 'LINE Seed JP', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 4px 20px var(--glow);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .convert-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+
+    .convert-btn:hover:not(:disabled)::before {
+      transform: translateX(100%);
+    }
+
+    .convert-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(108,92,231,0.4);
+    }
+
+    .convert-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .convert-btn:disabled {
+      background: var(--surface2);
+      color: #555;
+      box-shadow: none;
       cursor: not-allowed;
     }
 
+    /* プログレス */
     .progress-container {
-      margin-top: 20px;
+      margin-top: 24px;
       display: none;
     }
 
     .progress-bar-bg {
-      background: #334155;
-      border-radius: 8px;
+      background: var(--surface2);
+      border-radius: 10px;
       overflow: hidden;
-      height: 8px;
+      height: 6px;
     }
 
     .progress-bar {
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6);
       height: 100%;
       width: 0%;
-      transition: width 0.3s;
-      border-radius: 8px;
+      border-radius: 10px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 12px var(--glow);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .status {
       text-align: center;
-      margin-top: 12px;
-      font-size: 0.85rem;
-      color: #94a3b8;
+      margin-top: 14px;
+      font-size: 0.82rem;
+      font-weight: 400;
+      color: var(--text-sub);
       word-break: break-all;
+      transition: color 0.3s;
     }
-    .status.success { color: #4ade80; }
-    .status.error   { color: #f87171; }
+    .status.success { color: var(--success); }
+    .status.error   { color: var(--error); }
+
+    /* フッター */
+    .footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      color: var(--text-sub);
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    /* ファイル選択時のアニメーション */
+    @keyframes pulseOnce {
+      0%   { box-shadow: 0 0 0 0 rgba(108,92,231,0.4); }
+      70%  { box-shadow: 0 0 0 12px rgba(108,92,231,0); }
+      100% { box-shadow: 0 0 0 0 rgba(108,92,231,0); }
+    }
+
+    .drop-zone.file-selected {
+      animation: pulseOnce 0.6s ease-out;
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>WebM → M4A 変換</h1>
-    <p class="subtitle">ブラウザ上で完結。ファイルはサーバーに送信されません。</p>
+
+    <div class="app-header">
+      <div class="app-logo">
+        <div class="icon-circle">🎵</div>
+        <h1>webm2m4a</h1>
+      </div>
+      <p class="app-desc">ブラウザで完結する音声変換ツール — ファイルは外部に送信されません</p>
+    </div>
+
     <div class="env-check" id="envCheck"></div>
 
     <div class="drop-zone" id="dropZone">
-      <div class="icon">📁</div>
-      <p>クリックまたはD&Dで .webm を選択</p>
+      <span class="drop-icon">📂</span>
+      <p>ここにファイルをドロップ<br>またはクリックして .webm を選択</p>
     </div>
     <input type="file" id="fileInput" accept=".webm" hidden>
 
     <div class="file-name" id="fileName"></div>
 
     <div class="settings">
-      <label for="bitrate">ビットレート:</label>
+      <label for="bitrate">ビットレート</label>
       <select id="bitrate">
         <option value="128k">128 kbps</option>
         <option value="192k" selected>192 kbps</option>
@@ -171,7 +396,7 @@
       </select>
     </div>
 
-    <button id="convertBtn" disabled>変換する</button>
+    <button class="convert-btn" id="convertBtn" disabled>変換する</button>
 
     <div class="progress-container" id="progressContainer">
       <div class="progress-bar-bg">
@@ -179,6 +404,8 @@
       </div>
       <div class="status" id="status"></div>
     </div>
+
+    <div class="footer">Powered by ffmpeg.wasm — すべての処理はブラウザ内で実行されます</div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
@@ -201,15 +428,15 @@
         var coiEnabled   = window.crossOriginIsolated === true;
 
         if (sabSupported && coiEnabled) {
-          envCheckEl.textContent = '✓ 環境OK（Cross-Origin Isolated）';
+          envCheckEl.textContent = '✓ 環境OK — Cross-Origin Isolated';
           envCheckEl.className = 'env-check ok';
           return true;
         } else if (sabSupported) {
-          envCheckEl.textContent = '✓ 環境OK（SharedArrayBuffer 有効）';
+          envCheckEl.textContent = '✓ 環境OK';
           envCheckEl.className = 'env-check ok';
           return true;
         } else {
-          envCheckEl.innerHTML = '⏳ Service Worker 準備中… 自動リロードされます';
+          envCheckEl.innerHTML = '⏳ 初期化中… 自動リロードされます';
           envCheckEl.className = 'env-check wait';
           return false;
         }
@@ -235,14 +462,18 @@
       // ====== ファイル選択 ======
       function handleFile(file) {
         if (!file || !file.name.toLowerCase().endsWith('.webm')) {
-          fileNameEl.textContent = '⚠ .webm ファイルを選択してください';
+          fileNameEl.textContent = '.webm ファイルを選択してください';
           selectedFile = null;
           convertBtn.disabled = true;
           return;
         }
         selectedFile = file;
-        fileNameEl.textContent = '📄 ' + file.name + '（' + (file.size / 1024 / 1024).toFixed(2) + ' MB）';
+        fileNameEl.textContent = file.name + '（' + (file.size / 1024 / 1024).toFixed(2) + ' MB）';
         convertBtn.disabled = !envReady;
+
+        // 選択時のフィードバック
+        dropZone.classList.add('file-selected');
+        setTimeout(function(){ dropZone.classList.remove('file-selected'); }, 700);
       }
 
       dropZone.addEventListener('click', function () { fileInput.click(); });
@@ -285,7 +516,7 @@
           var arrayBuf = await selectedFile.arrayBuffer();
           ffmpeg.FS('writeFile', 'input.webm', new Uint8Array(arrayBuf));
 
-          statusEl.textContent = '変換中…（しばらくお待ちください）';
+          statusEl.textContent = '変換中…';
           progressBar.style.width = '30%';
 
           var bitrate = bitrateEl.value;
@@ -298,7 +529,7 @@
           );
 
           progressBar.style.width = '90%';
-          statusEl.textContent = 'ダウンロード準備中…';
+          statusEl.textContent = 'ダウンロードを準備中…';
 
           var data = ffmpeg.FS('readFile', 'output.m4a');
           var blob = new Blob([data.buffer], { type: 'audio/mp4' });
@@ -317,7 +548,7 @@
 
           progressBar.style.width = '100%';
           statusEl.className = 'status success';
-          statusEl.textContent = '変換完了！ダウンロードが開始されました。';
+          statusEl.textContent = '変換完了！ダウンロードが開始されました';
         } catch (err) {
           console.error(err);
           statusEl.className = 'status error';
