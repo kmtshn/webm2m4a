@@ -7,24 +7,30 @@
   <link rel="icon" href="data:,">
   <script src="coi-serviceworker.js"></script>
 
-  <!-- LINE Seed JP -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@100;300;400;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg:        #07080a;
-      --surface:   #111318;
-      --surface2:  #191c22;
-      --border:    #2a2e37;
-      --text:      #e8eaed;
-      --text-sub:  #8b8f98;
-      --accent:    #6c5ce7;
-      --accent2:   #a29bfe;
-      --success:   #00e676;
-      --error:     #ff5252;
-      --glow:      rgba(108, 92, 231, 0.25);
+      --bg:       #f0f2f5;
+      --surface:  #ffffff;
+      --surface2: #f7f8fa;
+      --border:   #e2e5ea;
+      --text:     #1a1c20;
+      --text-sub: #5f6368;
+      --accent:   #5b5eff;
+      --accent2:  #818cf8;
+      --accent-bg: rgba(91, 94, 255, 0.08);
+      --success:  #16a34a;
+      --success-bg: rgba(22,163,74,0.08);
+      --error:    #dc2626;
+      --error-bg: rgba(220,38,38,0.08);
+      --warn:     #ca8a04;
+      --warn-bg:  rgba(202,138,4,0.08);
+      --glow:     rgba(91, 94, 255, 0.15);
+      --shadow:   0 2px 16px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,50 +43,18 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
-    }
-
-    /* 背景パーティクル風のアクセント */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background:
-        radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(162,155,254,0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 60% 80%, rgba(108,92,231,0.05) 0%, transparent 50%);
-      animation: bgShift 20s ease-in-out infinite alternate;
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    @keyframes bgShift {
-      0%   { transform: translate(0, 0) rotate(0deg); }
-      100% { transform: translate(-3%, 2%) rotate(3deg); }
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
     .container {
-      position: relative;
-      z-index: 1;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 24px;
       padding: 44px 40px 36px;
-      max-width: 480px;
+      max-width: 460px;
       width: 92%;
-      box-shadow:
-        0 4px 24px rgba(0,0,0,0.4),
-        0 0 80px var(--glow);
-      transition: box-shadow 0.5s;
-    }
-
-    .container:hover {
-      box-shadow:
-        0 4px 32px rgba(0,0,0,0.5),
-        0 0 120px var(--glow);
+      box-shadow: var(--shadow-lg);
     }
 
     /* ヘッダー */
@@ -92,64 +66,60 @@
     .app-logo {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
+      gap: 12px;
+      margin-bottom: 10px;
     }
 
     .app-logo .icon-circle {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.1rem;
-      box-shadow: 0 4px 16px var(--glow);
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px var(--glow);
     }
 
     .app-logo h1 {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 800;
+      color: var(--text);
       letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--text) 30%, var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
 
     .app-desc {
       color: var(--text-sub);
-      font-size: 0.82rem;
-      font-weight: 300;
-      letter-spacing: 0.3px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      line-height: 1.5;
     }
 
     /* 環境チェック */
     .env-check {
       text-align: center;
-      font-size: 0.75rem;
-      font-weight: 400;
+      font-size: 0.8rem;
+      font-weight: 700;
       margin-bottom: 24px;
-      padding: 8px 16px;
-      border-radius: 10px;
+      padding: 10px 16px;
+      border-radius: 12px;
       border: 1px solid transparent;
-      transition: all 0.3s;
     }
     .env-check.ok {
       color: var(--success);
-      background: rgba(0,230,118,0.06);
-      border-color: rgba(0,230,118,0.15);
+      background: var(--success-bg);
+      border-color: rgba(22,163,74,0.15);
     }
     .env-check.fail {
       color: var(--error);
-      background: rgba(255,82,82,0.06);
-      border-color: rgba(255,82,82,0.15);
+      background: var(--error-bg);
+      border-color: rgba(220,38,38,0.15);
     }
     .env-check.wait {
-      color: #fdd835;
-      background: rgba(253,216,53,0.06);
-      border-color: rgba(253,216,53,0.15);
+      color: var(--warn);
+      background: var(--warn-bg);
+      border-color: rgba(202,138,4,0.15);
     }
 
     /* ドロップゾーン */
@@ -160,62 +130,51 @@
       padding: 44px 20px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      margin-bottom: 8px;
       background: var(--surface2);
-      overflow: hidden;
-    }
-
-    .drop-zone::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      background: radial-gradient(circle at 50% 50%, var(--glow), transparent 70%);
-      opacity: 0;
-      transition: opacity 0.4s;
-      pointer-events: none;
-    }
-
-    .drop-zone:hover::before,
-    .drop-zone.dragover::before {
-      opacity: 1;
     }
 
     .drop-zone:hover,
     .drop-zone.dragover {
       border-color: var(--accent);
+      background: var(--accent-bg);
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(108,92,231,0.15);
+      box-shadow: 0 8px 24px var(--glow);
     }
 
     .drop-zone .drop-icon {
-      font-size: 2.2rem;
+      font-size: 2.4rem;
       margin-bottom: 12px;
       display: block;
       transition: transform 0.3s;
     }
 
     .drop-zone:hover .drop-icon {
-      transform: scale(1.15);
+      transform: scale(1.1);
     }
 
     .drop-zone p {
       color: var(--text-sub);
-      font-size: 0.88rem;
-      font-weight: 300;
-      line-height: 1.6;
+      font-size: 0.9rem;
+      font-weight: 400;
+      line-height: 1.7;
     }
 
-    /* ファイル名表示 */
+    .drop-zone p strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* ファイル名 */
     .file-name {
-      color: var(--accent2);
+      color: var(--accent);
       font-size: 0.85rem;
-      font-weight: 400;
+      font-weight: 700;
       margin-bottom: 20px;
       text-align: center;
-      min-height: 1.2em;
-      transition: color 0.3s;
+      min-height: 1.4em;
+      padding: 4px 0;
     }
 
     /* 設定 */
@@ -224,38 +183,38 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .settings label {
-      font-size: 0.82rem;
-      font-weight: 400;
-      color: var(--text-sub);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
     }
 
     .settings select {
       font-family: 'LINE Seed JP', sans-serif;
-      background: var(--surface2);
+      background: var(--surface);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 10px;
-      padding: 8px 14px;
-      font-size: 0.82rem;
-      font-weight: 400;
+      padding: 9px 36px 9px 14px;
+      font-size: 0.85rem;
+      font-weight: 700;
       cursor: pointer;
       transition: border-color 0.3s;
       -webkit-appearance: none;
       appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%238b8f98' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235f6368' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 30px;
+      background-position: right 12px center;
     }
 
     .settings select:hover,
     .settings select:focus {
       border-color: var(--accent);
       outline: none;
+      box-shadow: 0 0 0 3px var(--glow);
     }
 
     /* ボタン */
@@ -266,24 +225,24 @@
       border: none;
       border-radius: 14px;
       font-family: 'LINE Seed JP', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      font-size: 1rem;
+      font-weight: 800;
       cursor: pointer;
       color: #fff;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
-      box-shadow: 0 4px 20px var(--glow);
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px var(--glow);
+      transition: all 0.3s ease;
       overflow: hidden;
+      letter-spacing: 0.5px;
     }
 
     .convert-btn::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+      background: linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
       transform: translateX(-100%);
-      transition: transform 0.6s;
+      transition: transform 0.5s;
     }
 
     .convert-btn:hover:not(:disabled)::before {
@@ -292,7 +251,7 @@
 
     .convert-btn:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(108,92,231,0.4);
+      box-shadow: 0 8px 28px rgba(91,94,255,0.3);
     }
 
     .convert-btn:active:not(:disabled) {
@@ -300,8 +259,8 @@
     }
 
     .convert-btn:disabled {
-      background: var(--surface2);
-      color: #555;
+      background: var(--border);
+      color: #aaa;
       box-shadow: none;
       cursor: not-allowed;
     }
@@ -314,9 +273,10 @@
 
     .progress-bar-bg {
       background: var(--surface2);
+      border: 1px solid var(--border);
       border-radius: 10px;
       overflow: hidden;
-      height: 6px;
+      height: 8px;
     }
 
     .progress-bar {
@@ -324,18 +284,16 @@
       width: 0%;
       border-radius: 10px;
       background: linear-gradient(90deg, var(--accent), var(--accent2));
-      box-shadow: 0 0 12px var(--glow);
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 0.4s ease;
     }
 
     .status {
       text-align: center;
       margin-top: 14px;
-      font-size: 0.82rem;
-      font-weight: 400;
+      font-size: 0.85rem;
+      font-weight: 700;
       color: var(--text-sub);
       word-break: break-all;
-      transition: color 0.3s;
     }
     .status.success { color: var(--success); }
     .status.error   { color: var(--error); }
@@ -346,17 +304,16 @@
       margin-top: 24px;
       padding-top: 16px;
       border-top: 1px solid var(--border);
-      color: var(--text-sub);
-      font-size: 0.7rem;
-      font-weight: 300;
-      letter-spacing: 0.5px;
+      color: #aaa;
+      font-size: 0.75rem;
+      font-weight: 400;
     }
 
-    /* ファイル選択時のアニメーション */
+    /* ファイル選択時のパルス */
     @keyframes pulseOnce {
-      0%   { box-shadow: 0 0 0 0 rgba(108,92,231,0.4); }
-      70%  { box-shadow: 0 0 0 12px rgba(108,92,231,0); }
-      100% { box-shadow: 0 0 0 0 rgba(108,92,231,0); }
+      0%   { box-shadow: 0 0 0 0 rgba(91,94,255,0.3); }
+      70%  { box-shadow: 0 0 0 14px rgba(91,94,255,0); }
+      100% { box-shadow: 0 0 0 0 rgba(91,94,255,0); }
     }
 
     .drop-zone.file-selected {
@@ -373,14 +330,14 @@
         <div class="icon-circle">🎵</div>
         <h1>webm2m4a</h1>
       </div>
-      <p class="app-desc">ブラウザで完結する音声変換ツール — ファイルは外部に送信されません</p>
+      <p class="app-desc">ブラウザで完結する音声変換ツール<br>ファイルは外部に送信されません</p>
     </div>
 
     <div class="env-check" id="envCheck"></div>
 
     <div class="drop-zone" id="dropZone">
       <span class="drop-icon">📂</span>
-      <p>ここにファイルをドロップ<br>またはクリックして .webm を選択</p>
+      <p>ここにファイルをドロップ<br>またはクリックして <strong>.webm</strong> を選択</p>
     </div>
     <input type="file" id="fileInput" accept=".webm" hidden>
 
@@ -422,11 +379,9 @@
       var bitrateEl   = document.getElementById('bitrate');
       var envCheckEl  = document.getElementById('envCheck');
 
-      // ====== 環境チェック ======
       function checkEnv() {
         var sabSupported = typeof SharedArrayBuffer !== 'undefined';
         var coiEnabled   = window.crossOriginIsolated === true;
-
         if (sabSupported && coiEnabled) {
           envCheckEl.textContent = '✓ 環境OK — Cross-Origin Isolated';
           envCheckEl.className = 'env-check ok';
@@ -443,7 +398,6 @@
       }
 
       var envReady = checkEnv();
-
       var selectedFile = null;
       var ffmpegLoaded = false;
 
@@ -459,7 +413,6 @@
         }
       });
 
-      // ====== ファイル選択 ======
       function handleFile(file) {
         if (!file || !file.name.toLowerCase().endsWith('.webm')) {
           fileNameEl.textContent = '.webm ファイルを選択してください';
@@ -470,8 +423,6 @@
         selectedFile = file;
         fileNameEl.textContent = file.name + '（' + (file.size / 1024 / 1024).toFixed(2) + ' MB）';
         convertBtn.disabled = !envReady;
-
-        // 選択時のフィードバック
         dropZone.classList.add('file-selected');
         setTimeout(function(){ dropZone.classList.remove('file-selected'); }, 700);
       }
@@ -493,7 +444,6 @@
         handleFile(fileInput.files[0]);
       });
 
-      // ====== 変換 ======
       convertBtn.addEventListener('click', async function () {
         if (!selectedFile) return;
 
@@ -548,7 +498,7 @@
 
           progressBar.style.width = '100%';
           statusEl.className = 'status success';
-          statusEl.textContent = '変換完了！ダウンロードが開始されました';
+          statusEl.textContent = '✓ 変換完了！ダウンロードが開始されました';
         } catch (err) {
           console.error(err);
           statusEl.className = 'status error';
