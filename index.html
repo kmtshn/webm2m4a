@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>webm2m4a</title>
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#5b5eff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="webm2m4a">
   <script src="coi-serviceworker.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -320,6 +326,72 @@
       animation: pulseOnce 0.6s ease-out;
       border-color: var(--accent);
     }
+
+    /* インストールバナー */
+    .install-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: center;
+      padding: 16px 20px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .install-banner.show {
+      display: flex;
+    }
+
+    .install-btn {
+      pointer-events: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 32px;
+      border: none;
+      border-radius: 9999px;
+      background: #2cc956;
+      color: #fff;
+      font-family: 'LINE Seed JP', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(44, 201, 86, 0.35), 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .install-btn:hover {
+      background: #25b34c;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 28px rgba(44, 201, 86, 0.45), 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .install-btn:active {
+      transform: translateY(0);
+    }
+
+    .install-btn svg {
+      flex-shrink: 0;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .install-banner.show .install-btn {
+      animation: slideUp 0.4s ease-out;
+    }
   </style>
 </head>
 <body>
@@ -363,6 +435,17 @@
     </div>
 
     <div class="footer">Powered by ffmpeg.wasm — すべての処理はブラウザ内で実行されます</div>
+  </div>
+
+  <!-- インストールバナー -->
+  <div class="install-banner" id="installBanner">
+    <button class="install-btn" id="installBtn">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 3v10m0 0l-3.5-3.5M10 13l3.5-3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 16h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      アプリをインストール
+    </button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
@@ -443,6 +526,42 @@
       fileInput.addEventListener('change', function () {
         handleFile(fileInput.files[0]);
       });
+
+      /* ── PWA インストール ── */
+      var installBanner = document.getElementById('installBanner');
+      var installBtnEl  = document.getElementById('installBtn');
+      var deferredPrompt = null;
+
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBanner.classList.add('show');
+      });
+
+      installBtnEl.addEventListener('click', async function () {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        var choice = await deferredPrompt.userChoice;
+        if (choice.outcome === 'accepted') {
+          console.log('PWA installed');
+        }
+        deferredPrompt = null;
+        installBanner.classList.remove('show');
+      });
+
+      window.addEventListener('appinstalled', function () {
+        installBanner.classList.remove('show');
+        deferredPrompt = null;
+      });
+
+      /* ── Service Worker 登録 ── */
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(function (reg) {
+          console.log('SW registered:', reg.scope);
+        }).catch(function (err) {
+          console.warn('SW registration failed:', err);
+        });
+      }
 
       convertBtn.addEventListener('click', async function () {
         if (!selectedFile) return;
